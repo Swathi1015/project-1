@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker - Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; 
+            align-items: center;
+            overflow-x: hidden;
+            color: white;
+            padding-top: 50px;
+        }
+
+        /* Consistent Blurred Background */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
+                        url('https://media.istockphoto.com/id/1058480580/photo/legacy-inheritance-or-death-tax-concept-us-dollar-bag-a-house-and-family-members-e-g-father.jpg?s=612x612&w=0&k=20&c=YO24Q8iUHMEVGiz-K1XJN1nPeObaV0ra0300TDzjz6w=');
+            background-size: cover;
+            background-position: center;
+            filter: blur(8px);
+            transform: scale(1.1);
+            z-index: -1;
+        }
+
+        h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            font-size: 2.5rem;
+            text-shadow: 0px 4px 15px rgba(0,0,0,0.6);
+            margin-bottom: 40px;
+            color: #d2a679;
+        }
+
+        /* Modules Row */
+        .module-row {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+            width: 95%;
+            max-width: 1200px;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        .module-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 20px 5px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .module-card:hover {
+            transform: translateY(5px);
+            background: rgba(210, 166, 121, 0.2);
+            border-color: #d2a679;
+        }
+
+        .module-icon { font-size: 24px; margin-bottom: 8px; display: block; }
+        .module-name { font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* --- NEW QUOTE SECTION --- */
+        .quote-wrapper {
+            margin-top: 80px;
+            text-align: center;
+            max-width: 700px;
+            padding: 20px;
+            border-top: 1px solid rgba(210, 166, 121, 0.3);
+            animation: fadeIn 2s ease-in;
+        }
+
+        #quote-text {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.1rem;
+            font-style: italic;
+            color: #efefef;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        #quote-author {
+            color: #d2a679;
+            font-weight: 600;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        /* --- FULL SCREEN OVERLAY METHOD --- */
+        .full-overlay {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(18, 12, 8, 0.98); /* Deep elegant brown/black */
+            z-index: 1000;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(20px);
+            transition: opacity 0.5s ease;
+        }
+
+        .overlay-content {
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            animation: zoomIn 0.4s ease-out;
+        }
+
+        .overlay-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2.5rem;
+            color: #d2a679;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .close-overlay-btn {
+            margin-top: 40px;
+            background: transparent;
+            border: 2px solid #d2a679;
+            color: #d2a679;
+            padding: 12px 35px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: 0.3s;
+        }
+
+        .close-overlay-btn:hover {
+            background: #d2a679;
+            color: #1a1009;
+        }
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-50px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 900px) {
+            .module-row { grid-template-columns: repeat(3, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Financial Dashboard</h1>
+
+    <div class="module-row">
+        <div class="module-card" onclick="openOverlay('Profile')">
+            <span class="module-icon">👤</span>
+            <span class="module-name">Profile</span>
+        </div>
+       
+        <div class="module-card" onclick="openOverlay('Expenses')">
+            <span class="module-icon">📉</span>
+            <span class="module-name">Expenses</span>
+        </div>
+        <div class="module-card" onclick="openOverlay('Investment')">
+            <span class="module-icon">📈</span>
+            <span class="module-name">Investment</span>
+        </div>
+        <div class="module-card" onclick="openOverlay('Goals')">
+            <span class="module-icon">🎯</span>
+            <span class="module-name">Goals</span>
+        </div>
+        <div class="module-card" onclick="openOverlay('Savings')">
+            <span class="module-icon">🐷</span>
+            <span class="module-name">Savings</span>
+        </div>
+   
+        <div class="module-card" onclick="openOverlay('Report')">
+            <span class="module-icon">📋</span>
+            <span class="module-name">Report</span>
+        </div>
+         </div>
+
+    <div class="quote-wrapper">
+        <p id="quote-text">"Do not save what is left after spending, but spend what is left after saving."</p>
+        <span id="quote-author">- Warren Buffett</span>
+    </div>
+
+    <div class="full-overlay" id="moduleOverlay">
+        <div class="overlay-content">
+            <h2 class="overlay-title" id="overlayTitle">Module</h2>
+            <p style="color: #bbb; line-height: 1.6;">You are now viewing your personalized dashboard data for this category. From here you can manage your records and track progress.</p>
+            
+            <div style="padding: 20px; border: 1px dashed #d2a679; border-radius: 10px; margin-top: 20px;">
+                <p>Configuration for <span id="categorySpan" style="color:white; font-weight: bold;"></span> is ready.</p>
+            </div>
+
+            <button class="close-overlay-btn" onclick="closeOverlay()">Close Overlay</button>
+        </div>
+    </div>
+
+    <script>
+        const quotes = [
+            { t: "Do not save what is left after spending, but spend what is left after saving.", a: "Warren Buffett" },
+            { t: "Beware of little expenses; a small leak will sink a great ship.", a: "Benjamin Franklin" },
+            { t: "The goal isn't more money. The goal is living life on your terms.", a: "Chris Brogan" },
+            { t: "Money is a terrible master but an excellent servant.", a: "P.T. Barnum" },
+            { t: "Financial freedom is available to those who learn about it and work for it.", a: "Robert Kiyosaki" }
+        ];
+function openOverlay(name) {
+    // Check if the clicked card is 'Profile'
+    if (name === 'Profile') {
+        // Redirection to your separate profile file
+        window.location.href = "profile1.html"; 
+        return; // Exit the function so the overlay doesn't open
+    }
+    if (name === 'Expenses') {
+        // Redirection to your separate profile file
+        window.location.href = "expenses1.html"; 
+        return; // Exit the function so the overlay doesn't open
+    }
+    if (name === 'Investment') {
+        // Redirection to your separate profile file
+        window.location.href = "investment1.html"; 
+        return; // Exit the function so the overlay doesn't open
+    }
+    if (name === 'Goals') {
+        // Redirection to your separate profile file
+        window.location.href = "goal1.html"; 
+        return; // Exit the function so the overlay doesn't open
+    }
+    if (name === 'Report') {
+        // Redirection to your separate profile file
+        window.location.href = "report1.html"; 
+        return; // Exit the function so the overlay doesn't open
+    }
+    if (name === 'Savings') {
+        // Redirection to your separate profile file
+        window.location.href = "savings1.html"; 
+        return; // Exit the function so the overlay doesn't open
+    }
+
+    // Existing logic for all other modules
+    document.getElementById('overlayTitle').innerText = name;
+    document.getElementById('categorySpan').innerText = name;
+    
+    const overlay = document.getElementById('moduleOverlay');
+    overlay.style.display = 'flex';
+    
+    const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+    document.getElementById('quote-text').innerText = `"${randomQuote.t}"`;
+    document.getElementById('quote-author').innerText = `- ${randomQuote.a}`;
+}
+
+        function closeOverlay() {
+            document.getElementById('moduleOverlay').style.display = 'none';
+        }
+    </script>
+</body> 
+</html>

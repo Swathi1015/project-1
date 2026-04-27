@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Dashboard - Goals</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Montserrat', sans-serif;
+            height: 100vh;
+            display: flex; flex-direction: column; align-items: center;
+            color: white; overflow: hidden;
+            padding-top: 30px;
+        }
+
+        body::before {
+            content: "";
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), 
+                        url('https://media.istockphoto.com/id/1058480580/photo/legacy-inheritance-or-death-tax-concept-us-dollar-bag-a-house-and-family-members-e-g-father.jpg?s=612x612&w=0&k=20&c=YO24Q8iUHMEVGiz-K1XJN1nPeObaV0ra0300TDzjz6w=');
+            background-size: cover; background-position: center;
+            filter: blur(8px); transform: scale(1.1); z-index: -2;
+        }
+
+        h1 { letter-spacing: 3px; text-transform: uppercase; color: #d2a679; margin-bottom: 20px; }
+
+        .goal-wrapper {
+            display: grid; grid-template-columns: 1.2fr 1fr; gap: 30px;
+            width: 90%; max-width: 1000px; height: 70vh;
+            background: rgba(25, 18, 12, 0.85); 
+            padding: 40px; border-radius: 20px; 
+            border: 1px solid rgba(210, 166, 121, 0.3);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
+
+        .currency-selector { margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
+        .currency-selector label { margin: 0; font-size: 0.75rem; color: #d2a679; }
+        .currency-selector select { 
+            width: auto; padding: 5px 10px; border-radius: 8px; border: 1px solid #d2a679;
+            background: rgba(0,0,0,0.3); color: white; outline: none;
+        }
+
+        label { display: block; color: #d2a679; font-size: 0.75rem; font-weight: 600; margin-bottom: 8px; letter-spacing: 1px; }
+        input {
+            width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.3); color: white; box-sizing: border-box; outline: none; margin-bottom: 20px;
+        }
+
+        .results-section {
+            text-align: center; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center;
+            border-left: 1px solid rgba(210, 166, 121, 0.2);
+            padding-left: 20px;
+        }
+
+        .time-value { font-size: 3rem; color: #d2a679; font-weight: 600; margin: 5px 0; }
+        .unit-label { font-size: 1rem; color: #efefef; text-transform: uppercase; letter-spacing: 2px; }
+        
+        .progress-container {
+            width: 100%; background: rgba(255,255,255,0.1); 
+            height: 10px; border-radius: 10px; margin-top: 30px; overflow: hidden;
+        }
+        .progress-bar {
+            width: 0%; height: 100%; background: #d2a679; transition: width 0.5s ease-in-out;
+        }
+
+        .btn-main {
+            background: #d2a679; color: #1a1009; border: none; 
+            padding: 12px 30px; border-radius: 25px; cursor: pointer; 
+            font-weight: bold; text-transform: uppercase; margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Financial Goals</h1>
+
+    <div class="goal-wrapper">
+        <div class="form-section">
+            <div class="currency-selector">
+                <label>CURRENCY:</label>
+                <select id="currencyType" onchange="calculateGoal()">
+                    <option value="$">USD ($)</option>
+                    <option value="₹">INR (₹)</option>
+                    <option value="€">EUR (€)</option>
+                </select>
+            </div>
+
+            <label>WHAT IS YOUR GOAL? (e.g. New Car, House Downpayment)</label>
+            <input type="text" id="goalName" placeholder="Enter your dream goal" oninput="calculateGoal()">
+
+            <label>PRICE OF THE GOAL</label>
+            <input type="number" id="goalPrice" placeholder="How much does it cost?" oninput="calculateGoal()">
+
+            <label>MONTHLY SAVINGS AFFORDABLE</label>
+            <input type="number" id="monthlyAfford" placeholder="How much can you save per month?" oninput="calculateGoal()">
+        </div>
+
+        <div class="results-section">
+            <p style="color: #aaa; font-size: 0.8rem; margin-bottom: 0;">TIME TO REACH GOAL</p>
+            <div class="time-value" id="monthsDisplay">0</div>
+            <div class="unit-label">Months</div>
+            
+            <p id="summaryText" style="font-size: 0.85rem; color: #bbb; margin-top: 20px; line-height: 1.6;">
+                Enter details to calculate your timeline.
+            </p>
+
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+
+            <button class="btn-main" onclick="window.location.href='dashboard1.html'">Back to Dashboard</button>
+        </div>
+    </div>
+
+    <script>
+        function calculateGoal() {
+            const price = parseFloat(document.getElementById('goalPrice').value) || 0;
+            const savings = parseFloat(document.getElementById('monthlyAfford').value) || 0;
+            const goalName = document.getElementById('goalName').value || "your goal";
+            const currency = document.getElementById('currencyType').value;
+
+            const monthsDisplay = document.getElementById('monthsDisplay');
+            const summaryText = document.getElementById('summaryText');
+            const progressBar = document.getElementById('progressBar');
+
+            if (price > 0 && savings > 0) {
+                const months = Math.ceil(price / savings);
+                const years = (months / 12).toFixed(1);
+
+                monthsDisplay.innerText = months;
+                
+                summaryText.innerHTML = `To buy your <b>${goalName}</b>, you need to save <b>${currency}${price.toLocaleString()}</b>. <br> At <b>${currency}${savings.toLocaleString()}/mo</b>, you'll reach it in about <b>${years} years</b>.`;
+                
+                // Purely visual progress logic: If savings is 10% of price, show 10% bar
+                let progress = (savings / price) * 100 * 5; // Multiplied for better visual feedback
+                progressBar.style.width = Math.min(progress, 100) + "%";
+            } else {
+                monthsDisplay.innerText = "0";
+                summaryText.innerText = "Enter details to calculate your timeline.";
+                progressBar.style.width = "0%";
+            }
+        }
+    </script>
+</body>
+</html>

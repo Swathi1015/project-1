@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investment Portfolio | Glassmorphism</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --accent-color: #d2a679;
+            --glass-bg: rgba(20, 15, 10, 0.65); /* Darker tint for better readability */
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --input-bg: rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            
+            /* Background image settings - using a high-quality dark interior/abstract image */
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
+                        url('https://media.istockphoto.com/id/1058480580/photo/legacy-inheritance-or-death-tax-concept-us-dollar-bag-a-house-and-family-members-e-g-father.jpg?s=612x612&w=0&k=20&c=YO24Q8iUHMEVGiz-K1XJN1nPeObaV0ra0300TDzjz6w=');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        h1 {
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            font-weight: 400;
+            font-size: 1.6rem;
+            margin-bottom: 30px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .investment-wrapper {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            width: 90%;
+            max-width: 1000px;
+            min-height: 520px;
+            border-radius: 20px;
+            overflow: hidden;
+            
+            /* GLASSMORPHISM CORE */
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px); /* This blurs the background image */
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        /* Left Section */
+        .input-section {
+            padding: 45px;
+        }
+
+        .currency-row {
+            margin-bottom: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        label {
+            display: block;
+            color: var(--accent-color);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 8px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 25px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.05);
+            background: var(--input-bg);
+            color: white;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        /* Right Section */
+        .results-section {
+            padding: 45px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.1); /* Subtle dark layer for contrast */
+            border-left: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: center;
+        }
+
+        .estimated-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 10px;
+        }
+
+        .calc-value {
+            font-size: 3.5rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            margin-bottom: 25px;
+        }
+
+        #chart-container {
+            width: 200px;
+            height: 200px;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        /* Buttons */
+        .save-btn {
+            background: var(--accent-color);
+            color: #1a1009;
+            border: none;
+            padding: 14px 35px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            transition: 0.3s;
+        }
+
+        .back-btn {
+            background: transparent;
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            padding: 10px 25px;
+            border-radius: 30px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            opacity: 0.85;
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Investment Portfolio</h1>
+
+    <div class="investment-wrapper">
+        <div class="input-section">
+            <div class="currency-row">
+                <span>CURRENCY:</span>
+                <select id="currency" style="width: auto; margin: 0; padding: 5px; font-size: 0.75rem;">
+                    <option value="USD">USD ($)</option>
+                    <option value="INR">INR (₹)</option>
+                </select>
+            </div>
+
+            <label>Investment Type</label>
+            <select id="type" onchange="calculate()">
+                <option value="Fixed Deposit">Fixed Deposit</option>
+                <option value="Mutual Funds">Mutual Funds</option>
+                <option value="Stocks">Stocks</option>
+                <option value="ETFs">ETFs</option>
+                <option value="SIP">SIP</option>
+            </select>
+
+            <label>Investment Amount</label>
+            <input type="number" id="amount" placeholder="Enter amount" oninput="calculate()">
+
+            <label>Expected Return Rate (%)</label>
+            <input type="number" id="rate" placeholder="e.g. 12" oninput="calculate()">
+
+            <label>Time Period (Years)</label>
+            <input type="number" id="years" placeholder="e.g. 5" oninput="calculate()">
+
+            <button class="save-btn" onclick="saveInvestment()">Save Investment</button>
+        </div>
+
+        <div class="results-section">
+            <p class="estimated-label">Estimated Maturity</p>
+            <div class="calc-value">
+                $<span id="totalDisplay">0</span>
+            </div>
+
+            <div id="chart-container">
+                <canvas id="chart"></canvas>
+            </div>
+
+            <button class="back-btn" onclick="window.location.href='dashboard1.html'">
+                Back to Dashboard
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let chart;
+
+        // Initialize empty chart on load
+        window.onload = () => updateChart(1, 0);
+
+        function calculate() {
+            const amount = parseFloat(document.getElementById("amount").value) || 0;
+            const rate = parseFloat(document.getElementById("rate").value) || 0;
+            const years = parseFloat(document.getElementById("years").value) || 0;
+
+            // Simple Compounding formula
+            let total = amount * Math.pow((1 + rate / 100), years);
+            let gain = total - amount;
+
+            document.getElementById("totalDisplay").innerText = Math.round(total).toLocaleString();
+
+            updateChart(amount, gain);
+        }
+
+        function updateChart(invested, gain) {
+            const ctx = document.getElementById("chart").getContext("2d");
+            if (chart) chart.destroy();
+
+            chart = new Chart(ctx, {
+                type: "doughnut",
+                data: {
+                    labels: ["Invested", "Gain"],
+                    datasets: [{
+                        data: [invested || 1, gain > 0 ? gain : 0],
+                        backgroundColor: ["#3d2c1e", "#d2a679"],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    cutout: '80%',
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        async function saveInvestment() {
+            const title = document.getElementById("type").value;
+            const amount = parseFloat(document.getElementById("amount").value);
+
+            if (!amount) {
+                alert("Please enter an amount");
+                return;
+            }
+
+            try {
+                const response = await fetch("http://localhost:5000/api/investments", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ title, amount })
+                });
+
+                if (response.ok) alert("Investment Saved Successfully ✅");
+                else alert("Error Saving ❌");
+            } catch (error) {
+                console.error(error);
+                alert("Server Error ❌");
+            }
+        }
+    </script>
+</body>
+</html>

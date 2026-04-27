@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker - Login</title>
+    <style>
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            overflow: hidden; background-color: #1a1009;
+        }
+
+        body::before {
+            content: "";
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), 
+                        url('https://media.istockphoto.com/id/1058480580/photo/legacy-inheritance-or-death-tax-concept-us-dollar-bag-a-house-and-family-members-e-g-father.jpg?s=612x612&w=0&k=20&c=YO24Q8iUHMEVGiz-K1XJN1nPeObaV0ra0300TDzjz6w=');
+            background-size: cover; background-position: center;
+            filter: blur(8px); transform: scale(1.1); z-index: -1;
+        }
+
+        .container {
+            background-color: rgba(255, 255, 255, 0.08); 
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            padding: 40px; border-radius: 20px; width: 350px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5); 
+            border: 1px solid rgba(255, 255, 255, 0.2); 
+            transition: all 0.4s ease;
+        }
+
+        h2 { text-align: center; color: #ffffff; margin-bottom: 25px; font-size: 28px; text-shadow: 2px 2px 10px rgba(0,0,0,0.5); }
+
+        input {
+            width: 100%; padding: 12px; margin: 10px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px;
+            background: rgba(0, 0, 0, 0.4); color: white; box-sizing: border-box; outline: none;
+        }
+
+        input:focus { border-color: #d2a679; background: rgba(0, 0, 0, 0.6); }
+
+        button {
+            width: 100%; padding: 12px; margin-top: 15px;
+            background-color: #d2a679; color: #1a1009; border: none;
+            border-radius: 8px; cursor: pointer; font-size: 16px;
+            font-weight: bold; transition: 0.3s;
+        }
+
+        button:hover { background-color: #ffffff; transform: translateY(-2px); }
+
+        .link { text-align: center; margin-top: 20px; font-size: 14px; color: white; }
+        .link a { color: #d2a679; text-decoration: none; font-weight: bold; cursor: pointer; }
+        .hidden { display: none !important; }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .login, .signup { animation: slideUp 0.4s ease-out; }
+    </style>
+</head>
+<body>
+
+    <div class="container login" id="loginPage">
+        <h2>💰 Expense Tracker</h2>
+        <form onsubmit="handleAuth(event)">
+            <input type="text" placeholder="Username" required>
+            <input type="password" placeholder="Password" required>
+            <button type="submit">Login Now</button>
+        </form>
+        <div class="link">
+            New user? <a onclick="showSignup()">Sign Up</a>
+        </div>
+    </div>
+
+    <div class="container signup hidden" id="signupPage">
+        <h2>📊 Create Account</h2>
+        <form onsubmit="handleAuth(event)">
+            <input type="text" placeholder="Full Name" required>
+            <input type="email" placeholder="Email" required>
+            <input type="password" placeholder="Password" required>
+            <button type="submit">Dashboard</button>
+
+        </form>
+        <div class="link">
+            Already have an account? <a onclick="showLogin()">Back to Login</a>
+        </div>
+    </div>
+
+    <script>
+        function showSignup() {
+            document.getElementById("loginPage").classList.add("hidden");
+            document.getElementById("signupPage").classList.remove("hidden");
+        }
+        function showLogin() {
+            document.getElementById("signupPage").classList.add("hidden");
+            document.getElementById("loginPage").classList.remove("hidden");
+        }
+
+  async function handleAuth(event) {
+    event.preventDefault();
+    window.location.href = "dashboard1.html";
+}
+    </script>
+</body>
+</html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Dashboard - Profile Page</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Montserrat', sans-serif;
+            height: 100vh;
+            display: flex; flex-direction: column; align-items: center;
+            color: white; overflow: hidden;
+            padding-top: 50px;
+        }
+
+        /* Dashboard Background Image */
+        body::before {
+            content: "";
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), 
+                        url('https://media.istockphoto.com/id/1058480580/photo/legacy-inheritance-or-death-tax-concept-us-dollar-bag-a-house-and-family-members-e-g-father.jpg?s=612x612&w=0&k=20&c=YO24Q8iUHMEVGiz-K1XJN1nPeObaV0ra0300TDzjz6w=');
+            background-size: cover; background-position: center;
+            filter: blur(8px); transform: scale(1.1); z-index: -2;
+        }
+
+        h1 { letter-spacing: 3px; text-transform: uppercase; color: #d2a679; margin-bottom: 40px; }
+
+        /* TRANSLUCENT OVERLAY: Ensures BG stays visible */
+        .profile-container {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 30px;
+            width: 90%; max-width: 1000px; 
+            background: rgba(25, 18, 12, 0.85); /* Deep translucent brown */
+            padding: 40px; border-radius: 20px; 
+            border: 1px solid rgba(210, 166, 121, 0.3);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
+
+        /* Form Styles */
+        .input-group { margin-bottom: 15px; text-align: left; }
+        label { display: block; color: #d2a679; font-size: 0.75rem; font-weight: 600; margin-bottom: 5px; letter-spacing: 1px; }
+        input {
+            width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.3); color: white; box-sizing: border-box; outline: none;
+        }
+        input:focus { border-color: #d2a679; }
+
+        .bank-row { display: flex; gap: 10px; margin-bottom: 10px; }
+
+        /* Currency Toggle */
+        .curr-toggle { margin-bottom: 20px; display: flex; gap: 10px; }
+        .toggle-btn { 
+            background: none; border: 1px solid #d2a679; color: #d2a679; 
+            padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 12px;
+        }
+        .toggle-btn.active { background: #d2a679; color: #1a1009; }
+
+        /* Chart Area */
+        #chartArea { width: 100%; height: 280px; position: relative; }
+        .total-box { font-size: 2rem; color: #d2a679; margin-top: 15px; font-weight: 600; }
+        .rule-text { font-size: 0.8rem; color: #888; margin-top: 5px; }
+
+        .save-btn {
+            background: #d2a679; color: #1a1009; border: none; 
+            padding: 12px 40px; border-radius: 25px; cursor: pointer; 
+            font-weight: bold; margin-top: 20px; transition: 0.3s;
+        }
+        .save-btn:hover { background: #fff; transform: scale(1.05); }
+
+        @media (max-width: 800px) { .profile-container { grid-template-columns: 1fr; overflow-y: auto; height: 80vh; } }
+    </style>
+</head>
+<body>
+
+    <h1>PROFILE</h1>
+
+    <div class="curr-toggle">
+        <button class="toggle-btn active" id="usd" onclick="updateCurrency('$')">USD ($)</button>
+        <button class="toggle-btn" id="inr" onclick="updateCurrency('₹')">INR (₹)</button>
+    </div>
+
+    <div class="profile-container">
+        <div class="form-container">
+            <div class="input-group">
+                <label>NAME</label>
+                <input type="text" placeholder="John Doe">
+            </div>
+            <div class="input-group">
+                <label>EMAIL</label>
+                <input type="email" placeholder="john@example.com">
+            </div>
+            <label>BANK BALANCES</label>
+            <div id="bankList">
+                <div class="bank-row">
+                    <input type="text" placeholder="Bank Name" style="flex:2;">
+                    <input type="number" class="bank-val" placeholder="0" style="flex:1;" oninput="syncFinance()">
+                </div>
+            </div>
+            <button onclick="addBank()" style="background:none; border:1px dashed #d2a679; color:#d2a679; width:100%; padding:10px; cursor:pointer; margin-top:10px; border-radius:8px;">+ Add Bank</button>
+        </div>
+
+        <div style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <div id="chartArea">
+                <canvas id="budgetPie"></canvas>
+            </div>
+            <div class="total-box"><span id="symbolLabel">$</span><span id="totalLabel">0</span></div>
+            <p class="rule-text">Rule: 50% Needs | 30% Wants | 20% Savings</p>
+           <button class="save-btn" onclick="window.location.href='dashboard1.html'">Save & Close</button>
+           <button class="Save-btn"onclick="saveProfile()"></button>
+        </div>
+    </div>
+
+    <script>
+        let myChart = null;
+        let currentSymbol = '$';
+
+        // Initial chart render
+        window.onload = syncFinance;
+
+        function updateCurrency(s) {
+            currentSymbol = s;
+            document.getElementById('symbolLabel').innerText = s;
+            document.getElementById('usd').classList.toggle('active', s === '$');
+            document.getElementById('inr').classList.toggle('active', s === '₹');
+            syncFinance();
+        }
+
+        function addBank() {
+            const container = document.getElementById('bankList');
+            const row = document.createElement('div');
+            row.className = 'bank-row';
+            row.innerHTML = `<input type="text" placeholder="Bank Name" style="flex:2;">
+                             <input type="number" class="bank-val" placeholder="0" style="flex:1;" oninput="syncFinance()">`;
+            container.appendChild(row);
+        }
+
+        function syncFinance() {
+            let total = 0;
+            const amounts = document.querySelectorAll('.bank-val');
+            amounts.forEach(input => {
+                total += parseFloat(input.value) || 0;
+            });
+
+            document.getElementById('totalLabel').innerText = total.toLocaleString();
+
+            // 50/30/20 Rule
+            const needs = total * 0.5;
+            const wants = total * 0.3;
+            const savings = total * 0.2;
+
+            updateChart(needs, wants, savings);
+        }
+
+        function updateChart(n, w, s) {
+            const ctx = document.getElementById('budgetPie').getContext('2d');
+            
+            if (myChart) {
+                myChart.destroy();
+            }
+
+            // Placeholder handling for zero values
+            const hasData = n > 0 || w > 0 || s > 0;
+            const dataValues = hasData ? [n, w, s] : [1, 1, 1];
+            const bgColors = hasData ? ['#d2a679', '#8e7358', '#4a3b2d'] : ['#332211', '#332211', '#332211'];
+
+            myChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Needs (50%)', 'Wants (30%)', 'Savings (20%)'],
+                    datasets: [{
+                        data: dataValues,
+                        backgroundColor: bgColors,
+                        borderWidth: 0,
+                        hoverOffset: 10
+                    }]  
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: { 
+                            position: 'bottom', 
+                            labels: { color: 'white', font: { size: 10, family: 'Montserrat' }, padding: 15 } 
+                        },
+                        tooltip: { enabled: hasData }
+                    }
+                }
+            });
+        }
+
+        function saveProfile() {
+
+    let total = 0;
+    const amounts = document.querySelectorAll('.bank-val');
+
+    amounts.forEach(input => {
+        total += parseFloat(input.value) || 0;
+    });
+
+    const profileData = {
+        name: document.querySelector('input[type="text"]').value,
+        email: document.querySelector('input[type="email"]').value,
+        totalBalance: total
+    };
+
+    fetch("http://localhost:5000/profile", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(profileData)
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert("Profile Saved Successfully ✅");
+        window.location.href = "dashboard1.html";
+    })
+    .catch(err => console.log(err));
+}
+    </script>
+</body>
+</html>

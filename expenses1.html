@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Dashboard - Expenses</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Montserrat', sans-serif;
+            height: 100vh;
+            display: flex; flex-direction: column; align-items: center;
+            color: white; overflow: hidden;
+            padding-top: 30px;
+        }
+
+        body::before {
+            content: "";
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), 
+                        url('https://media.istockphoto.com/id/1058480580/photo/legacy-inheritance-or-death-tax-concept-us-dollar-bag-a-house-and-family-members-e-g-father.jpg?s=612x612&w=0&k=20&c=YO24Q8iUHMEVGiz-K1XJN1nPeObaV0ra0300TDzjz6w=');
+            background-size: cover; background-position: center;
+            filter: blur(8px); transform: scale(1.1); z-index: -2;
+        }
+
+        h1 { letter-spacing: 3px; text-transform: uppercase; color: #d2a679; margin-bottom: 20px; }
+
+        .expense-wrapper {
+            display: grid; grid-template-columns: 1.5fr 1fr; gap: 30px;
+            width: 90%; max-width: 1100px; height: 75vh;
+            background: rgba(25, 18, 12, 0.85); 
+            padding: 30px; border-radius: 20px; 
+            border: 1px solid rgba(210, 166, 121, 0.3);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
+
+        label { display: block; color: #d2a679; font-size: 0.75rem; font-weight: 600; margin-bottom: 8px; letter-spacing: 1px; }
+        
+        input, select {
+            width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.3); color: white; box-sizing: border-box; outline: none;
+        }
+        
+        /* SCROLLABLE LIST AREA */
+        #expenseList {
+            max-height: 250px; 
+            overflow-y: auto; 
+            padding-right: 10px;
+            margin-bottom: 15px;
+        }
+
+        /* Custom Scrollbar */
+        #expenseList::-webkit-scrollbar { width: 5px; }
+        #expenseList::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+        #expenseList::-webkit-scrollbar-thumb { background: #d2a679; border-radius: 10px; }
+
+        /* Adjusted Row to 3 Columns */
+        .expense-row { 
+            display: grid; 
+            grid-template-columns: 100px 1fr 100px; 
+            gap: 10px; 
+            margin-bottom: 10px; 
+        }
+        
+        .add-btn {
+            background: none; border: 1px dashed #d2a679; color: #d2a679; 
+            width: 100%; padding: 10px; cursor: pointer; border-radius: 8px; font-weight: 600;
+        }
+
+        .currency-selector { margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .currency-selector select { width: auto; padding: 5px 10px; border-color: #d2a679; }
+
+        #chartContainer { width: 100%; height: 250px; position: relative; }
+        .total-expense-box { font-size: 1.8rem; color: #d2a679; margin-top: 15px; font-weight: 600; }
+        
+        .btn-main {
+            background: #d2a679; color: #1a1009; border: none; 
+            padding: 12px 30px; border-radius: 25px; cursor: pointer; 
+            font-weight: bold; margin-top: 20px; text-transform: uppercase;
+        }
+
+        @media (max-width: 850px) { 
+            .expense-wrapper { grid-template-columns: 1fr; height: auto; overflow-y: scroll; } 
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Expense Management</h1>
+
+    <div class="expense-wrapper">
+        <div class="form-section">
+            <div class="currency-selector">
+                <label style="margin-bottom: 0;">CURRENCY:</label>
+                <select id="currencyType" onchange="updateAnalytics()">
+                    <option value="$">USD ($)</option>
+                    <option value="₹">INR (₹)</option>
+                </select>
+            </div>
+
+            <label>MONTHLY BUDGET ALLOCATION</label>
+            <input type="number" id="monthlyBudget" placeholder="Total Budget" style="margin-bottom: 25px;" oninput="updateAnalytics()">
+
+            <label>LOG EXPENSES</label>
+            <div id="expenseList">
+                <div class="expense-row">
+                    <select class="exp-cat" onchange="updateAnalytics()">
+                        <option value="Needs">Needs</option>
+                        <option value="Wants">Wants</option>
+                        <option value="Savings">Savings</option>
+                    </select>
+                    <input type="text" placeholder="Expense Name (e.g. Rent)">
+                    <input type="number" class="exp-val" placeholder="Amount" oninput="updateAnalytics()">
+                </div>
+            </div>
+            
+            <button class="add-btn" onclick="addExpenseRow()">+ Add New Expense Item</button>
+        </div>
+
+        <div style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <div id="chartContainer">
+                <canvas id="expensePie"></canvas>
+            </div>
+            <div class="total-expense-box"><span id="currSym">$</span><span id="totalExpenseLabel">0</span></div>
+            <p id="budgetStatus" style="font-size: 0.85rem; color: #aaa; margin-top: 5px;">Enter budget to see status</p>
+        <button class="btn-main" onclick="saveExpenses()">Save Expenses</button>
+
+<button class="btn-main" onclick="window.location.href='dashboard1.html'">
+Back to Dashboard
+</button>
+             
+        </div>
+    </div>
+
+    <script>
+       
+let expenseChart = null;
+window.onload = updateAnalytics;
+
+function addExpenseRow() {
+    const container = document.getElementById('expenseList');
+    const row = document.createElement('div');
+    row.className = 'expense-row';
+    row.innerHTML = `
+        <select class="exp-cat" onchange="updateAnalytics()">
+            <option value="Needs">Needs</option>
+            <option value="Wants">Wants</option>
+            <option value="Savings">Savings</option>
+        </select>
+        <input type="text" class="exp-name" placeholder="Expense Name">
+        <input type="number" class="exp-val" placeholder="Amount" oninput="updateAnalytics()">
+    `;
+    container.appendChild(row);
+    container.scrollTop = container.scrollHeight;
+}
+
+function updateAnalytics() {
+    let total = 0;
+    let categories = { Needs: 0, Wants: 0, Savings: 0 };
+    
+    const currency = document.getElementById('currencyType').value;
+    document.getElementById('currSym').innerText = currency;
+
+    const rows = document.querySelectorAll('.expense-row');
+    rows.forEach(row => {
+        const amount = parseFloat(row.querySelector('.exp-val').value) || 0;
+        const cat = row.querySelector('.exp-cat').value;
+        categories[cat] += amount;
+        total += amount;
+    });
+
+    document.getElementById('totalExpenseLabel').innerText = total.toLocaleString();
+    renderPieChart(categories.Needs, categories.Wants, categories.Savings);
+}
+
+function renderPieChart(n, w, s) {
+    const ctx = document.getElementById('expensePie').getContext('2d');
+    if (expenseChart) expenseChart.destroy();
+
+    expenseChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ['Needs', 'Wants', 'Savings'],
+            datasets: [{
+                data: [n, w, s],
+                backgroundColor: ['#d2a679', '#8e7358', '#4a3b2d'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+async function saveExpenses() {
+    const rows = document.querySelectorAll('.expense-row');
+
+    try {
+        for (let row of rows) {
+            const category = row.querySelector('.exp-cat').value;
+            const name = row.querySelector('.exp-name')?.value || "";
+            const amount = parseFloat(row.querySelector('.exp-val').value) || 0;
+
+            if (amount > 0 && name !== "") {
+
+                await fetch("http://localhost:5000/", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        title: name,
+                        amount: amount,
+                        category: category
+                    })
+                });
+
+            }
+        }
+
+        alert("Expenses Saved Successfully to Database ✅");
+
+    } catch (error) {
+        console.log(error);
+        alert("Error saving expenses");
+    }
+}
+    </script>
+</body>
+</html>

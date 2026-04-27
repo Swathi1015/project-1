@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Dashboard - Savings</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Montserrat', sans-serif;
+            height: 100vh;
+            display: flex; flex-direction: column; align-items: center;
+            color: white; overflow: hidden;
+            padding-top: 30px;
+        }
+
+        body::before {
+            content: "";
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
+                        url('https://media.istockphoto.com/id/1058480580/photo/legacy-inheritance-or-death-tax-concept-us-dollar-bag-a-house-and-family-members-e-g-father.jpg?s=612x612&w=0&k=20&c=YO24Q8iUHMEVGiz-K1XJN1nPeObaV0ra0300TDzjz6w=');
+            background-size: cover; background-position: center;
+            filter: blur(8px); transform: scale(1.1); z-index: -2;
+        }
+
+        h1 { letter-spacing: 3px; text-transform: uppercase; color: #d2a679; margin-bottom: 20px; }
+
+        .savings-wrapper {
+            display: grid; grid-template-columns: 1.5fr 1fr; gap: 30px;
+            width: 90%; max-width: 1100px; height: 75vh;
+            background: rgba(25, 18, 12, 0.85); 
+            padding: 30px; border-radius: 20px; 
+            border: 1px solid rgba(210, 166, 121, 0.3);
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
+
+        label { display: block; color: #d2a679; font-size: 0.75rem; font-weight: 600; margin-bottom: 8px; letter-spacing: 1px; }
+        
+        input, select {
+            width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.3); color: white; box-sizing: border-box; outline: none;
+        }
+        
+        #savingsList {
+            max-height: 250px; 
+            overflow-y: auto; 
+            padding-right: 10px;
+            margin-bottom: 15px;
+        }
+
+        #savingsList::-webkit-scrollbar { width: 5px; }
+        #savingsList::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+        #savingsList::-webkit-scrollbar-thumb { background: #d2a679; border-radius: 10px; }
+
+        .savings-row { 
+            display: grid; 
+            grid-template-columns: 120px 1fr 100px; 
+            gap: 10px; 
+            margin-bottom: 10px; 
+        }
+        
+        .add-btn {
+            background: none; border: 1px dashed #d2a679; color: #d2a679; 
+            width: 100%; padding: 10px; cursor: pointer; border-radius: 8px; font-weight: 600;
+        }
+
+        .currency-selector { margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .currency-selector select { width: auto; padding: 5px 10px; border-color: #d2a679; }
+
+        #chartContainer { width: 100%; height: 250px; position: relative; }
+        .total-savings-box { font-size: 1.8rem; color: #d2a679; margin-top: 15px; font-weight: 600; }
+        
+        .btn-main {
+            background: #d2a679; color: #1a1009; border: none; 
+            padding: 12px 30px; border-radius: 25px; cursor: pointer; 
+            font-weight: bold; margin-top: 20px; text-transform: uppercase;
+        }
+
+        @media (max-width: 850px) { 
+            .savings-wrapper { grid-template-columns: 1fr; height: auto; overflow-y: scroll; } 
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Savings Management</h1>
+
+    <div class="savings-wrapper">
+        <div class="form-section">
+            <div class="currency-selector">
+                <label style="margin-bottom: 0;">CURRENCY:</label>
+                <select id="currencyType" onchange="updateAnalytics()">
+                    <option value="₹">INR (₹)</option>
+                    <option value="$">USD ($)</option>
+                </select>
+            </div>
+
+            <label>MONTHLY SAVINGS GOAL</label>
+            <input type="number" id="savingsGoal" placeholder="Target Amount" style="margin-bottom: 25px;" oninput="updateAnalytics()">
+
+            <label>SAVINGS ALLOCATION</label>
+            <div id="savingsList">
+                <div class="savings-row">
+                    <select class="save-cat" onchange="updateAnalytics()">
+                        <option value="Emergency">Emergency Fund</option>
+                        <option value="Retirement">Retirement</option>
+                        <option value="Travel">Travel</option>
+                        <option value="Others">Others</option>
+                    </select>
+                    <input type="text" placeholder="Account (e.g. HDFC)">
+                    <input type="number" class="save-val" placeholder="Amount" oninput="updateAnalytics()">
+                </div>
+            </div>
+            
+            <button class="add-btn" onclick="addSavingsRow()">+ Add New Savings Source</button>
+        </div>
+
+        <div style="text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+            <div id="chartContainer">
+                <canvas id="savingsPie"></canvas>
+            </div>
+            <div class="total-savings-box"><span id="currSym">₹</span><span id="totalSavingsLabel">0</span></div>
+            <p id="goalStatus" style="font-size: 0.85rem; color: #aaa; margin-top: 5px;">Set a goal to track progress</p>
+            <button class="btn-main" onclick="saveSavings()">Save Savings</button>
+            
+            <button class="btn-main" onclick="window.location.href='dashboard1.html'">Back to Dashboard</button>
+        </div>
+    </div>
+
+    <script>
+
+let savingsChart = null;
+
+window.onload = updateAnalytics;
+
+function addSavingsRow() {
+    const container = document.getElementById("savingsList");
+
+    const row = document.createElement("div");
+    row.className = "savings-row";
+
+    row.innerHTML = `
+        <select class="save-cat" onchange="updateAnalytics()">
+            <option value="Emergency">Emergency Fund</option>
+            <option value="Retirement">Retirement</option>
+            <option value="Travel">Travel</option>
+            <option value="Others">Others</option>
+        </select>
+        <input type="text" placeholder="Account Name">
+        <input type="number" class="save-val" placeholder="Amount" oninput="updateAnalytics()">
+    `;
+
+    container.appendChild(row);
+}
+
+function updateAnalytics() {
+
+    let total = 0;
+    let categories = { Emergency: 0, Retirement: 0, Travel: 0, Others: 0 };
+
+    const currency = document.getElementById("currencyType").value;
+    document.getElementById("currSym").innerText = currency;
+
+    const rows = document.querySelectorAll(".savings-row");
+
+    rows.forEach(row => {
+        const amount = parseFloat(row.querySelector(".save-val").value) || 0;
+        const cat = row.querySelector(".save-cat").value;
+
+        categories[cat] += amount;
+        total += amount;
+    });
+
+    document.getElementById("totalSavingsLabel").innerText =
+        total.toLocaleString();
+
+    renderChart(categories);
+}
+
+function renderChart(data) {
+
+    const ctx = document.getElementById("savingsPie").getContext("2d");
+
+    if (savingsChart) savingsChart.destroy();
+
+    savingsChart = new Chart(ctx, {
+        type: "pie",
+        data: {
+            labels: Object.keys(data),
+            datasets: [{
+                data: Object.values(data),
+                backgroundColor: ["#d2a679", "#8e7358", "#4a3b2d", "#a67c52"]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+
+
+async function saveSavings() {
+
+    const rows = document.querySelectorAll(".savings-row");
+
+    try {
+
+        for (let row of rows) {
+
+            const category = row.querySelector(".save-cat").value;
+            const amount = parseFloat(row.querySelector(".save-val").value) || 0;
+
+            if (amount > 0) {
+
+                await fetch("http://localhost:5000/savings", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        title: category,
+                        amount: amount,
+                        category: category
+                    })
+                });
+
+            }
+        }
+
+        alert("Savings saved to database ✅");
+
+    } catch (error) {
+        console.log(error);
+        alert("Error saving savings ❌");
+    }
+}
+
+
+    </script>
+</body>
+</html>
